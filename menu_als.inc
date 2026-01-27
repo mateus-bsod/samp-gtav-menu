@@ -127,7 +127,7 @@ stock Menu_Add(playerid, const item[64], const item2[64] = "_")
     return 0;
 }
 
-// INFO: Função Bruta do Menu_Show
+// INFO: FunÃ§Ã£o Bruta do Menu_Show
 stock MShow(playerid, const function[], const tittle[] = "Menu", const header[] = "Interaction")
 {
     if(strlen(function) < 1) 
@@ -153,7 +153,7 @@ stock MShow(playerid, const function[], const tittle[] = "Menu", const header[] 
     return 1;
 }
 
-// INFO: Função responsavel por Tirar o Menu da Tela
+// INFO: FunÃ§Ã£o responsavel por Tirar o Menu da Tela
 stock Menu_Hide(playerid) 
 {
 
@@ -198,14 +198,14 @@ stock Menu_Hide(playerid)
     return 1;
 }
 
-// INFO: Função responsavel por setar a cor principal do Menu
+// INFO: FunÃ§Ã£o responsavel por setar a cor principal do Menu
 stock Menu_SetColor(playerid, color)
 {
     player_item_color[playerid] = color;
     return 1;
 }
 
-// INFO: Função responsavel por selecionar um index
+// INFO: FunÃ§Ã£o responsavel por selecionar um index
 static Menu_SelectIndex(playerid, index, cur_index = -1, bool:show = true) 
 {
     if(cur_index != -1) 
@@ -233,7 +233,7 @@ static Menu_SelectIndex(playerid, index, cur_index = -1, bool:show = true)
     return 1;   
 }
 
-// INFO: Função responsavel por aparecer uma pagina em especifico
+// INFO: FunÃ§Ã£o responsavel por aparecer uma pagina em especifico
 static Menu_ShowPage(playerid, page = 0) 
 {
     for(new j = 0, i = page * MENU_MAX_ITEM_PER_PAGE; i < MENU_MAX_ITEM_PER_PAGE * (page + 1); i ++, j ++) 
@@ -274,13 +274,13 @@ static Menu_ShowPage(playerid, page = 0)
     return 1;
 }
 
-// INFO: Função responsavel para pegar atual item no qual o player esta selecionando
+// INFO: FunÃ§Ã£o responsavel para pegar atual item no qual o player esta selecionando
 static Menu_CurrentItem(playerid) 
 {
     return MENU_MAX_ITEM_PER_PAGE * GetPVarInt(playerid, "Menu.curPage") + GetPVarInt(playerid, "Menu.SelectIndex");
 }
 
-// INFO: Função responsavel por pegar o maximo de itens por pagina
+// INFO: FunÃ§Ã£o responsavel por pegar o maximo de itens por pagina
 stock Menu_GetMaxItemPerPage(playerid, cur_page) 
 {
     new 
@@ -296,7 +296,7 @@ stock Menu_GetMaxItemPerPage(playerid, cur_page)
     return count;
 }
 
-// INFO: Função responsavel por criar os itens
+// INFO: FunÃ§Ã£o responsavel por criar os itens
 static Menu_Create_TD(playerid, index, const item[64], const item2[64]) 
 {
     if(_@m_item[playerid][index] != PlayerText:-1) 
@@ -358,14 +358,14 @@ static Menu_Create_TD(playerid, index, const item[64], const item2[64])
     return 1;
 }
 
-// INFO: Função responsavel por verificar se está na tela do Jogador
+// INFO: FunÃ§Ã£o responsavel por verificar se estÃ¡ na tela do Jogador
 stock Menu_Showing(playerid) 
 {
     //return GetPVarInt(playerid, "Menu.SelectIndex") == -1 ? 0 : 1;
     return ApareceuMenu[playerid];
 }
 
-// INFO: Função responsavel por pegar o maximo de paginas
+// INFO: FunÃ§Ã£o responsavel por pegar o maximo de paginas
 stock Menu_GetMaxPage(playerid) 
 {
     new 
@@ -549,7 +549,7 @@ public OnPlayerDisconnect(playerid, reason)
 #endif
 
 // INFO: gancho no OnPlayerUpdate para verificar se o player esta apertando as keys
-// OBS: Não recomendo o uso do OnPlayerUpdate pois ela é chamada muitas vezes por segundo.
+// OBS: NÃ£o recomendo o uso do OnPlayerUpdate pois ela Ã© chamada muitas vezes por segundo.
 public OnPlayerUpdate(playerid)
 {
     if(Menu_Showing(playerid) && count_tick[playerid] - GetTickCount() <= 0)
@@ -701,7 +701,7 @@ public OnGameModeInit()
 // dP""""Yb 88  Y8 8888Y"  88  Yb  YbodP  88 8888Y"  
 // 
 
-// INFO: Verificar se o Player (Android) está apertando a textdraw
+// INFO: Verificar se o Player (Android) estÃ¡ apertando a textdraw
 public OnClickDynamicPlayerTextDraw(playerid, PlayerText:playertextid)
 {
     new 
@@ -812,4 +812,34 @@ stock HideMiniMenu(playerid)
             PlayerTextDrawHide(playerid, SelecAndroid[playerid][i]);
     CancelSelectTextDraw(playerid);
     return 1;
+}
+
+// INFO: FunÃ§Ã£o para setar o primeiro texto do item (esquerdo)
+stock Menu_SetText(playerid, index, const item[64])
+{
+    if(!ApareceuMenu[playerid])
+        return 0;
+
+    if(-1 < index < MENU_MAX_ITEMS && Iter_Contains(player_items[playerid], index))
+    {
+        strcat((player_item_list[playerid][index][0] = EOS, player_item_list[playerid][index]), item);
+        PlayerTextDrawSetString(playerid, _@m_item[playerid][index], item);
+        return 1;
+    }
+    return 0;
+}
+
+// INFO: FunÃ§Ã£o para setar o segundo texto do item (direito)
+stock Menu_SetSubText(playerid, index, const item[64])
+{
+    if(!ApareceuMenu[playerid])
+        return 0;
+
+    if(-1 < index < MENU_MAX_ITEMS && Iter_Contains(player_items[playerid], index))
+    {
+        strcat((player_item_list2[playerid][index][0] = EOS, player_item_list2[playerid][index]), item);
+        PlayerTextDrawSetString(playerid, _@m_item2[playerid][index], item);
+        return 1;
+    }
+    return 0;
 }
