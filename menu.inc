@@ -730,3 +730,33 @@ stock HideMiniMenu(playerid)
     CancelSelectTextDraw(playerid);
     return 1;
 }
+
+// INFO: Função para setar o primeiro texto do item (esquerdo)
+stock Menu_SetText(playerid, index, const item[64])
+{
+    if(!ApareceuMenu[playerid])
+        return 0;
+
+    if(-1 < index < MENU_MAX_ITEMS && Iter_Contains(player_items[playerid], index))
+    {
+        strcat((player_item_list[playerid][index][0] = EOS, player_item_list[playerid][index]), item);
+        PlayerTextDrawSetString(playerid, _@m_item[playerid][index], item);
+        return 1;
+    }
+    return 0;
+}
+
+// INFO: Função para setar o segundo texto do item (direito)
+stock Menu_SetSubText(playerid, index, const item[64])
+{
+    if(!ApareceuMenu[playerid])
+        return 0;
+
+    if(-1 < index < MENU_MAX_ITEMS && Iter_Contains(player_items[playerid], index))
+    {
+        strcat((player_item_list2[playerid][index][0] = EOS, player_item_list2[playerid][index]), item);
+        PlayerTextDrawSetString(playerid, _@m_item2[playerid][index], item);
+        return 1;
+    }
+    return 0;
+}
