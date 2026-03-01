@@ -23,6 +23,14 @@
 > + Foi adicionado textdraw-streamer para o melhor manuseio da include
 
 ## Todas as Funções
+### Atualização
+```bash
++ stock Menu_HideEx(playerid)
++ stock Menu_HideNoCancel(playerid) -> melhor pra um menu em seguida de outro
++ stock Menu_Hide(playerid)
++ Menu_IsDoubleClick(playerid, item)
+```
+
 ```bash
 Menu_Add(playerid, const item[64], const item2[64] = "_")
 Menu_Show(playerid, function, title, header)
