@@ -28,6 +28,7 @@
 + Menu_HideEx(playerid) -> tira o menu e seta SetCameraBehindPlayer
 + Menu_HideNoCancel(playerid) -> melhor pra um menu em seguida de outro
 + Menu_IsDoubleClick(playerid, item)
++ Corrigido o bug de cooldown
 
 + Novas Manuseio de Teclas
 * Aperte ESPACO para selecionar
