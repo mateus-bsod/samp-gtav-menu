@@ -5,8 +5,8 @@
 //  YboodP 88  Yb 888888 8888Y"  88   88    YbodP  8bodP' 
 //
 
-// Liv Javier
-// Mateus "mateus-bsod" Lima (tommy_stardust)
+//Liv Javier
+//tommy_stardust (Mateus-BSOD)
 
 
 //
@@ -25,24 +25,8 @@
 //
 
 // - IsPlayerAndroid
-#if !defined Menu_IsPlayerAndroid
-    #error "[FMenu]: <Menu_IsPlayerAndroid> not found."
-#endif
-
-// - textdraw-streamer.inc
-#tryinclude <textdraw-streamer.inc>
-#if !defined _INC_textdraw_streamer
-	#error "[FMenu]: <github.com/nexquery/samp-textdraw-streamer> not found."
-#else
-#endif
-
-// - y_hooks
-#tryinclude <YSI_Coding\y_hooks>
-#if !defined _inc_y_hooks
-	#error "[FMenu]: <YSI_Coding\y_hooks> not found."
-#endif
-
-#include <a_samp>
+//#define Menu_IsPlayerAndroid IsPlayerAndroid
+#include <YSI_Coding\y_hooks>
 
 //
 // 8b    d8    db     dP""b8 88""Yb  dP"Yb  .dP"Y8 
@@ -78,7 +62,6 @@ const
 
 static
     bool:ApareceuMenu[MAX_PLAYERS],
-    ResponseMenu[MAX_PLAYERS],
     count_tick[MAX_PLAYERS],
     player_menu_callback[MAX_PLAYERS][32],
     player_menu_callback_key[MAX_PLAYERS][32],
@@ -94,6 +77,13 @@ static
 
 new PlayerText: SelecAndroid[MAX_PLAYERS][4];
 
+new 
+    ul_select[MAX_PLAYERS],
+    ul_clicou[MAX_PLAYERS],
+    ul_callback[MAX_PLAYERS][32];
+
+
+
 //
 // 888888 88   88 88b 88  dP""b8  dP"Yb  888888 .dP"Y8 
 // 88__   88   88 88Yb88 dP   `" dP   Yb 88__   `Ybo." 
@@ -102,7 +92,7 @@ new PlayerText: SelecAndroid[MAX_PLAYERS][4];
 //
 
 // INFO: Adiciona um item no menu.
-stock Menu_Add(playerid, const item[64], const item2[64] = "_")
+stock Menu_Add(playerid, const item[ ], const item2[ ] = "_")
 {
     if(ApareceuMenu[playerid])
     {
@@ -122,6 +112,38 @@ stock Menu_Add(playerid, const item[64], const item2[64] = "_")
     return 0;
 }
 
+
+// INFO: Função para setar o primeiro texto do item (esquerdo)
+stock Menu_SetText(playerid, index, const item[ ])
+{
+    if(!ApareceuMenu[playerid])
+        return 0;
+
+    if(-1 < index < MENU_MAX_ITEMS && Iter_Contains(player_items[playerid], index))
+    {
+        strcat((player_item_list[playerid][index][0] = EOS, player_item_list[playerid][index]), item);
+        PlayerTextDrawSetString(playerid, _@m_item[playerid][index], item);
+        return 1;
+    }
+    return 0;
+}
+
+// INFO: Função para setar o segundo texto do item (direito)
+stock Menu_SetSubText(playerid, index, const item[ ])
+{
+    if(!ApareceuMenu[playerid])
+        return 0;
+
+    if(-1 < index < MENU_MAX_ITEMS && Iter_Contains(player_items[playerid], index))
+    {
+        strcat((player_item_list2[playerid][index][0] = EOS, player_item_list2[playerid][index]), item);
+        PlayerTextDrawSetString(playerid, _@m_item2[playerid][index], item);
+        return 1;
+    }
+    return 0;
+}
+
+
 // INFO: Função Bruta do Menu_Show
 stock MShow(playerid, const function[], const tittle[] = "Menu", const header[] = "Interaction")
 {
@@ -140,20 +162,41 @@ stock MShow(playerid, const function[], const tittle[] = "Menu", const header[] 
     Menu_ShowPage(playerid, 0);
     Menu_SelectIndex(playerid, 0);
 
+    format(ul_callback[playerid], 32, "Menu_%s", function);
     format(player_menu_callback[playerid], 32, "Menu_%s", function);
     format(player_menu_callback_key[playerid], 32, "KeyMenu_%s", function);
 	TogglePlayerControllable(playerid, 0);
 
+    ul_clicou[playerid] = -1;  // doubleclick
+    ul_select[playerid] = -1; // ultimo item q escolheu
     ApareceuMenu[playerid] = true;
+
+    //if(!Menu_IsPlayerAndroid(playerid)) SendPlayerText(playerid, "Aperte ESPACO para selecionar~n~Aperte F para sair~n~Aperte as setas (ou W,S) para mover-los.", 1, 5000, COLOR_WARNING);
     return 1;
 }
 
+stock Menu_IsDoubleClick(playerid, item)
+    return (ul_clicou[playerid] && ul_select[playerid] == item && !strcmp(ul_callback[playerid], player_menu_callback[playerid]));
+
+
 // INFO: Função responsavel por Tirar o Menu da Tela
-stock Menu_Hide(playerid) 
+stock Menu_HideEx(playerid)
+{
+    Menu_Hide(playerid);
+    SetCameraBehindPlayer(playerid);
+    return 1;
+}
+
+stock Menu_HideNoCancel(playerid) 
 {
 
 	TogglePlayerControllable(playerid, 1);
-    HideMiniMenu(playerid);
+
+    // hide mini menu
+    for(new i = 0; i < 4; ++i)
+        if(IsDynamicPlayerTextDrawVisible(playerid, SelecAndroid[playerid][i]))
+            PlayerTextDrawHide(playerid, SelecAndroid[playerid][i]);
+
     for(new i = 0; i < 5; i ++) 
     {
         if(IsDynamicPlayerTextDrawVisible(playerid, _@m_ptd[playerid][i]))
@@ -161,7 +204,7 @@ stock Menu_Hide(playerid)
     }
     for(new count = 0; count < MENU_MAX_ITEM_PER_PAGE; count ++) 
     {
-        if(_@m_item[playerid][count] != PlayerText:INVALID_TEXT_DRAW) 
+        if(IsValidDynamicPlayerTextDraw(playerid, _@m_item[playerid][count]))
         {
             if(IsDynamicPlayerTextDrawVisible(playerid, _@m_item[playerid][count]))
             {
@@ -169,7 +212,7 @@ stock Menu_Hide(playerid)
                 _@m_item[playerid][count] = PlayerText:INVALID_TEXT_DRAW;
             }
         }               
-        if(_@m_item2[playerid][count] != PlayerText:INVALID_TEXT_DRAW) 
+        if(IsValidDynamicPlayerTextDraw(playerid, _@m_item2[playerid][count]))
         {
             if(IsDynamicPlayerTextDrawVisible(playerid, _@m_item2[playerid][count]))
             {
@@ -177,7 +220,7 @@ stock Menu_Hide(playerid)
                 _@m_item2[playerid][count] = PlayerText:INVALID_TEXT_DRAW;
             }
         }             
-        if(_@m_box[playerid][count] != PlayerText:INVALID_TEXT_DRAW) 
+        if(IsValidDynamicPlayerTextDraw(playerid, _@m_box[playerid][count]))
         {
             if(IsDynamicPlayerTextDrawVisible(playerid, _@m_box[playerid][count]))
             {
@@ -189,7 +232,17 @@ stock Menu_Hide(playerid)
     Iter_Clear(player_items[playerid]);
     SetPVarInt(playerid, "Menu.SelectIndex", -1);
 
+    format(ul_callback[playerid], 32, "nuo");
+    ul_clicou[playerid] = -1;  // doubleclick
+    ul_select[playerid] = -1; // ultimo item q escolheu
     ApareceuMenu[playerid] = false;
+    return 1;
+}
+
+stock Menu_Hide(playerid) 
+{
+    Menu_HideNoCancel(playerid);
+    CancelSelectTextDraw(playerid);
     return 1;
 }
 
@@ -205,13 +258,13 @@ static Menu_SelectIndex(playerid, index, cur_index = -1, bool:show = true)
 {
     if(cur_index != -1) 
     {
-        if(_@m_box[playerid][cur_index] != PlayerText:INVALID_TEXT_DRAW) 
+        if(IsValidDynamicPlayerTextDraw(playerid, _@m_box[playerid][cur_index])) 
         {
             PlayerTextDrawColor(playerid, _@m_box[playerid][cur_index], MENU_ITEM_COLOR);
             if(show) PlayerTextDrawShow(playerid, _@m_box[playerid][cur_index]);
         }   
     }
-    if(_@m_box[playerid][index] != PlayerText:INVALID_TEXT_DRAW) 
+    if(IsValidDynamicPlayerTextDraw(playerid, _@m_box[playerid][index])) 
     {
         SetPVarInt(playerid, "Menu.SelectIndex", index);
         PlayerTextDrawColor(playerid, _@m_box[playerid][index], player_item_color[playerid]);
@@ -239,7 +292,7 @@ static Menu_ShowPage(playerid, page = 0)
         }
         else 
         {
-            if(_@m_item[playerid][j] != PlayerText:-1) 
+            if(IsValidDynamicPlayerTextDraw(playerid, _@m_item[playerid][j]))
             {
                 if(IsDynamicPlayerTextDrawVisible(playerid, _@m_item[playerid][j]))
                 {
@@ -247,7 +300,7 @@ static Menu_ShowPage(playerid, page = 0)
                     _@m_item[playerid][j] = PlayerText:-1;
                 }
             }           
-            if(_@m_item2[playerid][j] != PlayerText:-1) 
+            if(IsValidDynamicPlayerTextDraw(playerid, _@m_item2[playerid][j]))
             {
                 if(IsDynamicPlayerTextDrawVisible(playerid, _@m_item2[playerid][j]))
                 {
@@ -255,7 +308,7 @@ static Menu_ShowPage(playerid, page = 0)
                     _@m_item2[playerid][j] = PlayerText:-1;
                 }
             }      
-            if(_@m_box[playerid][j] != PlayerText:-1) 
+            if(IsValidDynamicPlayerTextDraw(playerid, _@m_box[playerid][j]))
             {
                 if(IsDynamicPlayerTextDrawVisible(playerid, _@m_box[playerid][j]))
                 {
@@ -270,7 +323,7 @@ static Menu_ShowPage(playerid, page = 0)
 }
 
 // INFO: Função responsavel para pegar atual item no qual o player esta selecionando
-static Menu_CurrentItem(playerid) 
+stock Menu_CurrentItem(playerid) 
 {
     return MENU_MAX_ITEM_PER_PAGE * GetPVarInt(playerid, "Menu.curPage") + GetPVarInt(playerid, "Menu.SelectIndex");
 }
@@ -292,19 +345,19 @@ stock Menu_GetMaxItemPerPage(playerid, cur_page)
 }
 
 // INFO: Função responsavel por criar os itens
-static Menu_Create_TD(playerid, index, const item[64], const item2[64]) 
+static Menu_Create_TD(playerid, index, const item[ ], const item2[ ]) 
 {
-    if(_@m_item[playerid][index] != PlayerText:-1) 
+    if(IsValidDynamicPlayerTextDraw(playerid, _@m_item[playerid][index]))
     {
         if(IsDynamicPlayerTextDrawVisible(playerid, _@m_item[playerid][index]))
             PlayerTextDrawDestroy(playerid, _@m_item[playerid][index]);
     }
-    if(_@m_item2[playerid][index] != PlayerText:-1) 
+    if(IsValidDynamicPlayerTextDraw(playerid, _@m_item2[playerid][index]))
     {
         if(IsDynamicPlayerTextDrawVisible(playerid, _@m_item2[playerid][index]))
             PlayerTextDrawDestroy(playerid, _@m_item2[playerid][index]);
     }
-    if(_@m_box[playerid][index] != PlayerText:-1) 
+    if(IsValidDynamicPlayerTextDraw(playerid, _@m_box[playerid][index]))
     {
         if(IsDynamicPlayerTextDrawVisible(playerid, _@m_box[playerid][index]))
             PlayerTextDrawDestroy(playerid, _@m_box[playerid][index]);
@@ -320,18 +373,6 @@ static Menu_Create_TD(playerid, index, const item[64], const item2[64])
     PlayerTextDrawSetShadow(playerid, _@m_box[playerid][index], 0);
     PlayerTextDrawFont(playerid, _@m_box[playerid][index], 4);
     PlayerTextDrawShow(playerid, _@m_box[playerid][index]);
-
-    /*
-    
-    _@m_ptd[playerid][4] = CreatePlayerTextDraw(playerid, 607.598144, 193.359298, #); // Page
-    PlayerTextDrawLetterSize(playerid, _@m_ptd[playerid][4], 0.123999, 0.766222);
-    PlayerTextDrawSetProportional(playerid, _@m_ptd[playerid][4], 1);
-    PlayerTextDrawSetShadow(playerid, _@m_ptd[playerid][4], 0);
-    PlayerTextDrawAlignment(playerid, _@m_ptd[playerid][4], 3);
-    PlayerTextDrawColor(playerid, _@m_ptd[playerid][4], -1);
-    PlayerTextDrawFont(playerid, _@m_ptd[playerid][4], 2);    
-    
-     */
 
     _@m_item2[playerid][index] = CreatePlayerTextDraw(playerid, 500.366638 + 107.231506, Y + 0.0 + index * 0.4, item2);
     PlayerTextDrawLetterSize(playerid, _@m_item2[playerid][index], 0.184666, 0.886074);
@@ -372,6 +413,7 @@ stock Menu_GetMaxPage(playerid)
 // INFO: gancho na OnPlayerConnect para criar as textdraw para android(s).
 hook OnPlayerConnect(playerid)
 {
+    Iter_Clear(player_items[playerid]);
 
     SelecAndroid[playerid][0] = CreatePlayerTextDraw(playerid, 434.000, 219.000, "CIMA");
     PlayerTextDrawLetterSize(playerid, SelecAndroid[playerid][0], 0.268, 1.398);
@@ -468,6 +510,7 @@ hook OnPlayerConnect(playerid)
     
     format(player_menu_callback[playerid], 1, "");
     format(player_menu_callback_key[playerid], 1, "");
+    ul_clicou[playerid] = -1;
     for(new i = 0; i < MENU_MAX_ITEM_PER_PAGE; i ++) 
     {
         _@m_item[playerid][i] = PlayerText:-1;
@@ -485,12 +528,13 @@ hook OnPlayerDisconnect(playerid, reason)
     Iter_Clear(player_items[playerid]);
     for(new i = 0; i < 5; i ++) 
     {
-        if(IsDynamicPlayerTextDrawVisible(playerid, _@m_ptd[playerid][i]))
-            PlayerTextDrawDestroy(playerid, _@m_ptd[playerid][i]);
+        if(IsValidDynamicPlayerTextDraw(playerid, _@m_ptd[playerid][i]))
+            if(IsDynamicPlayerTextDrawVisible(playerid, _@m_ptd[playerid][i]))
+                PlayerTextDrawDestroy(playerid, _@m_ptd[playerid][i]);
     }
     for(new i = 0; i < MENU_MAX_ITEM_PER_PAGE; i ++) 
     {
-        if(_@m_item[playerid][i] != PlayerText:INVALID_TEXT_DRAW) 
+        if(IsValidDynamicPlayerTextDraw(playerid, _@m_item[playerid][i]))
         {
             if(IsDynamicPlayerTextDrawVisible(playerid, _@m_item[playerid][i]))
             {
@@ -498,7 +542,7 @@ hook OnPlayerDisconnect(playerid, reason)
                 _@m_item[playerid][i] = PlayerText:INVALID_TEXT_DRAW;
             }
         }               
-        if(_@m_item2[playerid][i] != PlayerText:INVALID_TEXT_DRAW) 
+        if(IsValidDynamicPlayerTextDraw(playerid, _@m_item2[playerid][i]))
         {
             if(IsDynamicPlayerTextDrawVisible(playerid, _@m_item2[playerid][i]))
             {
@@ -506,7 +550,7 @@ hook OnPlayerDisconnect(playerid, reason)
                 _@m_item2[playerid][i] = PlayerText:INVALID_TEXT_DRAW;
             }
         }      
-        if(_@m_box[playerid][i] != PlayerText:INVALID_TEXT_DRAW) 
+        if(IsValidDynamicPlayerTextDraw(playerid, _@m_box[playerid][i]))
         {
             if(IsDynamicPlayerTextDrawVisible(playerid, _@m_box[playerid][i]))
             {
@@ -531,7 +575,7 @@ hook OnPlayerUpdate(playerid)
                 curPage = GetPVarInt(playerid, "Menu.curPage"),
                 oldIndex = GetPVarInt(playerid, "Menu.SelectIndex");
 
-        // nextIndex = oldIndex;
+            // nextIndex = oldIndex;
             GetPlayerKeys(playerid, Keys, ud, lr);
             #pragma unused Keys, lr
             switch(ud)
@@ -553,6 +597,7 @@ hook OnPlayerUpdate(playerid)
                         }
                     }
                     Menu_SelectIndex(playerid, nextIndex, oldIndex);    
+                    ul_clicou[playerid] = -1;
                     CallLocalFunction(player_menu_callback_key[playerid], "ii", playerid, nextIndex);
                 }
                 case KEY_UP:
@@ -587,6 +632,7 @@ hook OnPlayerUpdate(playerid)
                         //  printf("Page=%d; nextIndex=%d;", page, nextIndex);
                     }
                     Menu_SelectIndex(playerid, nextIndex, oldIndex);    
+                    ul_clicou[playerid] = -1;
                     CallLocalFunction(player_menu_callback_key[playerid], "ii", playerid, nextIndex);
                 }
             }
@@ -607,7 +653,7 @@ hook OnPlayerKeyStateChange(playerid, newkeys, oldkeys)
                 case KEY_SECONDARY_ATTACK, KEY_SPRINT: 
                 { 
                     new 
-                        response = (newkeys & KEY_SECONDARY_ATTACK) ? 1 : 0;
+                        response = (newkeys & KEY_SPRINT) ? 1 : 0;
                     
                     Selecionar(playerid, response);
                 }           
@@ -670,6 +716,7 @@ hook OnClickDynamicPlayerTD(playerid, PlayerText:playertextid)
             //  printf("Page=%d; nextIndex=%d;", page, nextIndex);
         }
         Menu_SelectIndex(playerid, nextIndex, oldIndex);
+        ul_clicou[playerid] = -1;
         CallLocalFunction(player_menu_callback_key[playerid], "ii", playerid, nextIndex);
     }
     if(playertextid == SelecAndroid[playerid][1]) // baixo
@@ -689,6 +736,7 @@ hook OnClickDynamicPlayerTD(playerid, PlayerText:playertextid)
             }
         }
         Menu_SelectIndex(playerid, nextIndex, oldIndex);    
+        ul_clicou[playerid] = -1;
         CallLocalFunction(player_menu_callback_key[playerid], "ii", playerid, nextIndex);
     }
     if(playertextid == SelecAndroid[playerid][2]) // SELECIONAR
@@ -707,7 +755,12 @@ stock Selecionar(playerid, response)
 {
     if(strlen(player_menu_callback[playerid]) > 0) 
     {
+        if(ul_select[playerid] == Menu_CurrentItem(playerid) && !strcmp(ul_callback[playerid], player_menu_callback[playerid]))
+            ul_clicou[playerid] = 1;
+        else ul_clicou[playerid] = -1;
+
         CallLocalFunction(player_menu_callback[playerid], "ddd", playerid, response, Menu_CurrentItem(playerid));
+        ul_select[playerid] = Menu_CurrentItem(playerid);
     }
 }
 
@@ -715,8 +768,9 @@ stock Selecionar(playerid, response)
 stock ShowMiniMenu(playerid)
 {
     for(new i = 0; i < 4; ++i)
-        if(!IsDynamicPlayerTextDrawVisible(playerid, SelecAndroid[playerid][i]))
-            PlayerTextDrawShow(playerid, SelecAndroid[playerid][i]);
+        if(IsValidDynamicPlayerTextDraw(playerid, SelecAndroid[playerid][i]))
+            if(!IsDynamicPlayerTextDrawVisible(playerid, SelecAndroid[playerid][i]))
+                PlayerTextDrawShow(playerid, SelecAndroid[playerid][i]);
     SelectTextDraw(playerid, -1);
     return 1;
 }
@@ -725,38 +779,9 @@ stock ShowMiniMenu(playerid)
 stock HideMiniMenu(playerid)
 {
     for(new i = 0; i < 4; ++i)
-        if(IsDynamicPlayerTextDrawVisible(playerid, SelecAndroid[playerid][i]))
-            PlayerTextDrawHide(playerid, SelecAndroid[playerid][i]);
+        if(IsValidDynamicPlayerTextDraw(playerid, SelecAndroid[playerid][i]))
+            if(IsDynamicPlayerTextDrawVisible(playerid, SelecAndroid[playerid][i]))
+                PlayerTextDrawHide(playerid, SelecAndroid[playerid][i]);
     CancelSelectTextDraw(playerid);
     return 1;
-}
-
-// INFO: Função para setar o primeiro texto do item (esquerdo)
-stock Menu_SetText(playerid, index, const item[64])
-{
-    if(!ApareceuMenu[playerid])
-        return 0;
-
-    if(-1 < index < MENU_MAX_ITEMS && Iter_Contains(player_items[playerid], index))
-    {
-        strcat((player_item_list[playerid][index][0] = EOS, player_item_list[playerid][index]), item);
-        PlayerTextDrawSetString(playerid, _@m_item[playerid][index], item);
-        return 1;
-    }
-    return 0;
-}
-
-// INFO: Função para setar o segundo texto do item (direito)
-stock Menu_SetSubText(playerid, index, const item[64])
-{
-    if(!ApareceuMenu[playerid])
-        return 0;
-
-    if(-1 < index < MENU_MAX_ITEMS && Iter_Contains(player_items[playerid], index))
-    {
-        strcat((player_item_list2[playerid][index][0] = EOS, player_item_list2[playerid][index]), item);
-        PlayerTextDrawSetString(playerid, _@m_item2[playerid][index], item);
-        return 1;
-    }
-    return 0;
 }
