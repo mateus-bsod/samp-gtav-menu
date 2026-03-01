@@ -25,9 +25,8 @@
 ## Todas as Funções
 ### Atualização
 ```diff
-+ stock Menu_HideEx(playerid)
-+ stock Menu_HideNoCancel(playerid) -> melhor pra um menu em seguida de outro
-+ stock Menu_Hide(playerid)
++ Menu_HideEx(playerid) -> tira o menu e seta SetCameraBehindPlayer
++ Menu_HideNoCancel(playerid) -> melhor pra um menu em seguida de outro
 + Menu_IsDoubleClick(playerid, item)
 
 + Novas Manuseio de Teclas
