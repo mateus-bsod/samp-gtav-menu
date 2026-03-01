@@ -24,11 +24,16 @@
 
 ## Todas as Funções
 ### Atualização
-```bash
+```diff
 + stock Menu_HideEx(playerid)
 + stock Menu_HideNoCancel(playerid) -> melhor pra um menu em seguida de outro
 + stock Menu_Hide(playerid)
 + Menu_IsDoubleClick(playerid, item)
+
++ Novas Manuseio de Teclas
+* Aperte ESPACO para selecionar
+* Aperte F para sair
+* Aperte as setas (ou W,S) para mover-los.
 ```
 
 ```bash
