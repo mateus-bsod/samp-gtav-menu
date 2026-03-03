@@ -1,5 +1,3 @@
-> [!IMPORTANT]  
-> USE "menu.inc", O Menu com ALS Method ainda não foi concluido.
 
 # FMenu (Versão Melhorada)
 > - Versão original dessa include: https://github.com/dinhkhoi2298/menu </br>
