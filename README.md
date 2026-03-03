@@ -2,7 +2,7 @@
 > USE "menu.inc", O Menu com ALS Method ainda não foi concluido.
 
 # FMenu (Versão Melhorada)
-> Versão original dessa include: https://github.com/dinhkhoi2298/menu </br>
+> - Versão original dessa include: https://github.com/dinhkhoi2298/menu </br>
 
 # Creditos
 - `dinhkhoi2298` por ter criado a include
@@ -13,6 +13,9 @@
 - y_hooks (https://github.com/pawn-lang/YSI-Includes)
 
 # Modificações
+> + Função de verificar se o player clicou duas vezes no mesmo item
+> + Corrigido o bug de cooldown dos botões
+> + Adicionado extensões do `Menu_Hide(playerid)`
 > + Função de gancho das keys pressionadas `KeyMenu:...(playerid, index)`
 > + Função OnMenuResponse foi substituida pelo macro `Menu:...(playerid, response, listitem)`
 > + O Sistema agora é em base de strings não em menuid
@@ -126,3 +129,8 @@ Menu:MENU_COMPRAS_ALHAMBA(playerid, response, listitem)
 ![exemplo01](https://github.com/mateus-bsod/samp-gtav-menu/blob/main/imgs/example01.png)
 ![exemplo02](https://github.com/mateus-bsod/samp-gtav-menu/blob/main/imgs/example02.png)
 ![exemplo03](https://github.com/mateus-bsod/samp-gtav-menu/blob/main/imgs/example03.png)
+
+
+
+# 
+> - Não utilizem a versão desse repositorio: [Essa versão](https://github.com/mateus0sh/FMenu) está depreciada, é um repositorio antigo de uma conta na qual não obtive mais acesso, aconselho fielmente usar a versão deste repositorio, desde já agradeço a compreensão.  </br>
