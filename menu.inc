@@ -25,7 +25,7 @@
 //
 
 // - IsPlayerAndroid
-#define Menu_IsPlayerAndroid IsPlayerAndroid
+//#define Menu_IsPlayerAndroid IsPlayerAndroid
 #include <YSI_Coding\y_hooks>
 
 //
