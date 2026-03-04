@@ -26,7 +26,7 @@
 
 // - IsPlayerAndroid
 #define Menu_IsPlayerAndroid IsPlayerAndroid
-#include <YSI\YSI_Coding\y_hooks>
+#include <YSI_Coding\y_hooks>
 
 //
 // 8b    d8    db     dP""b8 88""Yb  dP"Yb  .dP"Y8 
