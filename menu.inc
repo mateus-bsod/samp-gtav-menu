@@ -6,7 +6,7 @@
 //
 
 //Liv Javier
-//tommy_stardust (Mateus-BSOD)
+//tommy_stardust
 
 
 //
@@ -25,8 +25,8 @@
 //
 
 // - IsPlayerAndroid
-//#define Menu_IsPlayerAndroid IsPlayerAndroid
-#include <YSI_Coding\y_hooks>
+#define Menu_IsPlayerAndroid IsPlayerAndroid
+#include <YSI\YSI_Coding\y_hooks>
 
 //
 // 8b    d8    db     dP""b8 88""Yb  dP"Yb  .dP"Y8 
@@ -46,6 +46,7 @@
 #define Menu_Show(%0,%1, \
     MShow(%0, #%1,
 // Exemplo de Uso: Menu_Show(playerid, xxx, "24/7", "Interacao com NPC");
+
 
 //
 // Yb    dP    db    88""Yb 88    db    Yb    dP 888888 88 .dP"Y8 
@@ -76,6 +77,8 @@ static
     //PlayerText:_@m_sub_item[MAX_PLAYERS][MENU_MAX_ITEM_PER_PAGE] = {PlayerText:-1, ...}; ko lam nua
 
 new PlayerText: SelecAndroid[MAX_PLAYERS][4];
+
+static last_selected[MAX_PLAYERS] = {-1, ...};
 
 new 
     ul_select[MAX_PLAYERS],
@@ -166,17 +169,14 @@ stock MShow(playerid, const function[], const tittle[] = "Menu", const header[] 
     format(player_menu_callback[playerid], 32, "Menu_%s", function);
     format(player_menu_callback_key[playerid], 32, "KeyMenu_%s", function);
 	TogglePlayerControllable(playerid, 0);
-
-    ul_clicou[playerid] = -1;  // doubleclick
-    ul_select[playerid] = -1; // ultimo item q escolheu
     ApareceuMenu[playerid] = true;
 
     //if(!Menu_IsPlayerAndroid(playerid)) SendPlayerText(playerid, "Aperte ESPACO para selecionar~n~Aperte F para sair~n~Aperte as setas (ou W,S) para mover-los.", 1, 5000, COLOR_WARNING);
     return 1;
 }
 
-stock Menu_IsDoubleClick(playerid, item)
-    return (ul_clicou[playerid] && ul_select[playerid] == item && !strcmp(ul_callback[playerid], player_menu_callback[playerid]));
+stock bool:Menu_IsDoubleClick(playerid, index)
+    return (ul_clicou[playerid] == 1 && Menu_CurrentItem(playerid) == index);
 
 
 // INFO: Função responsavel por Tirar o Menu da Tela
@@ -186,6 +186,7 @@ stock Menu_HideEx(playerid)
     SetCameraBehindPlayer(playerid);
     return 1;
 }
+
 
 stock Menu_HideNoCancel(playerid) 
 {
@@ -232,9 +233,10 @@ stock Menu_HideNoCancel(playerid)
     Iter_Clear(player_items[playerid]);
     SetPVarInt(playerid, "Menu.SelectIndex", -1);
 
-    format(ul_callback[playerid], 32, "nuo");
-    ul_clicou[playerid] = -1;  // doubleclick
+    format(ul_callback[playerid], 32, "mateusbsod");
+    ul_clicou[playerid] = 0;  // doubleclick
     ul_select[playerid] = -1; // ultimo item q escolheu
+    last_selected[playerid] = -1;
     ApareceuMenu[playerid] = false;
     return 1;
 }
@@ -264,6 +266,7 @@ static Menu_SelectIndex(playerid, index, cur_index = -1, bool:show = true)
             if(show) PlayerTextDrawShow(playerid, _@m_box[playerid][cur_index]);
         }   
     }
+
     if(IsValidDynamicPlayerTextDraw(playerid, _@m_box[playerid][index])) 
     {
         SetPVarInt(playerid, "Menu.SelectIndex", index);
@@ -271,13 +274,16 @@ static Menu_SelectIndex(playerid, index, cur_index = -1, bool:show = true)
         if(show) PlayerTextDrawShow(playerid, _@m_box[playerid][index]);
     }
 
-    new 
-        str[22];
+    new str[22];
 
-    count_tick[playerid] = GetTickCount() + 150;
     format(str, sizeof(str), "%d/%d", Menu_CurrentItem(playerid) + 1, Iter_Count(player_items[playerid]));
     PlayerTextDrawSetString(playerid, _@m_ptd[playerid][4], str);
     PlayerTextDrawShow(playerid, _@m_ptd[playerid][4]);     
+
+    ul_clicou[playerid] = 0;
+    ul_select[playerid] = Menu_CurrentItem(playerid);
+    last_selected[playerid] = -1;
+
     return 1;   
 }
 
@@ -319,6 +325,9 @@ static Menu_ShowPage(playerid, page = 0)
         }
     }
     SetPVarInt(playerid, "Menu.curPage", page);
+
+    ul_clicou[playerid] = 0;
+    ul_select[playerid] = 0;
     return 1;
 }
 
@@ -510,7 +519,7 @@ hook OnPlayerConnect(playerid)
     
     format(player_menu_callback[playerid], 1, "");
     format(player_menu_callback_key[playerid], 1, "");
-    ul_clicou[playerid] = -1;
+    ul_clicou[playerid] = 0;
     for(new i = 0; i < MENU_MAX_ITEM_PER_PAGE; i ++) 
     {
         _@m_item[playerid][i] = PlayerText:-1;
@@ -597,7 +606,7 @@ hook OnPlayerUpdate(playerid)
                         }
                     }
                     Menu_SelectIndex(playerid, nextIndex, oldIndex);    
-                    ul_clicou[playerid] = -1;
+                    count_tick[playerid] = GetTickCount()+150;
                     CallLocalFunction(player_menu_callback_key[playerid], "ii", playerid, nextIndex);
                 }
                 case KEY_UP:
@@ -632,7 +641,7 @@ hook OnPlayerUpdate(playerid)
                         //  printf("Page=%d; nextIndex=%d;", page, nextIndex);
                     }
                     Menu_SelectIndex(playerid, nextIndex, oldIndex);    
-                    ul_clicou[playerid] = -1;
+                    count_tick[playerid] = GetTickCount()+150;
                     CallLocalFunction(player_menu_callback_key[playerid], "ii", playerid, nextIndex);
                 }
             }
@@ -716,7 +725,6 @@ hook OnClickDynamicPlayerTD(playerid, PlayerText:playertextid)
             //  printf("Page=%d; nextIndex=%d;", page, nextIndex);
         }
         Menu_SelectIndex(playerid, nextIndex, oldIndex);
-        ul_clicou[playerid] = -1;
         CallLocalFunction(player_menu_callback_key[playerid], "ii", playerid, nextIndex);
     }
     if(playertextid == SelecAndroid[playerid][1]) // baixo
@@ -736,7 +744,6 @@ hook OnClickDynamicPlayerTD(playerid, PlayerText:playertextid)
             }
         }
         Menu_SelectIndex(playerid, nextIndex, oldIndex);    
-        ul_clicou[playerid] = -1;
         CallLocalFunction(player_menu_callback_key[playerid], "ii", playerid, nextIndex);
     }
     if(playertextid == SelecAndroid[playerid][2]) // SELECIONAR
@@ -755,12 +762,15 @@ stock Selecionar(playerid, response)
 {
     if(strlen(player_menu_callback[playerid]) > 0) 
     {
-        if(ul_select[playerid] == Menu_CurrentItem(playerid) && !strcmp(ul_callback[playerid], player_menu_callback[playerid]))
-            ul_clicou[playerid] = 1;
-        else ul_clicou[playerid] = -1;
+        new Menuitem = Menu_CurrentItem(playerid);
 
-        CallLocalFunction(player_menu_callback[playerid], "ddd", playerid, response, Menu_CurrentItem(playerid));
-        ul_select[playerid] = Menu_CurrentItem(playerid);
+        ul_clicou[playerid] = (last_selected[playerid] == Menuitem) ? 1 : 0;
+        last_selected[playerid] = Menuitem;
+        ul_select[playerid] = Menuitem;
+
+        CallLocalFunction(player_menu_callback[playerid], "ddd", playerid, response, Menuitem);
+
+        ul_clicou[playerid] = 0;
     }
 }
 
