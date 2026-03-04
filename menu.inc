@@ -25,7 +25,6 @@
 //
 
 // - IsPlayerAndroid
-//#define Menu_IsPlayerAndroid IsPlayerAndroid
 #include <YSI_Coding\y_hooks>
 
 //
@@ -174,10 +173,6 @@ stock MShow(playerid, const function[], const tittle[] = "Menu", const header[] 
     //if(!Menu_IsPlayerAndroid(playerid)) SendPlayerText(playerid, "Aperte ESPACO para selecionar~n~Aperte F para sair~n~Aperte as setas (ou W,S) para mover-los.", 1, 5000, COLOR_WARNING);
     return 1;
 }
-
-stock bool:Menu_IsDoubleClick(playerid, index)
-    return (ul_clicou[playerid] == 1 && Menu_CurrentItem(playerid) == index);
-
 
 // INFO: Função responsavel por Tirar o Menu da Tela
 stock Menu_HideEx(playerid)
@@ -758,6 +753,10 @@ hook OnClickDynamicPlayerTD(playerid, PlayerText:playertextid)
 }
 
 // INFO: Auto Explicativo
+
+/*
+new tick_double[MAX_PLAYERS];
+
 stock Selecionar(playerid, response)
 {
     if(strlen(player_menu_callback[playerid]) > 0) 
@@ -768,10 +767,55 @@ stock Selecionar(playerid, response)
         last_selected[playerid] = Menuitem;
         ul_select[playerid] = Menuitem;
 
+        tick_double[playerid] = GetTickCount() + 500;
+        if(tick_double[playerid] < GetTickCount())
+        {
+            tick_double[playerid] = 0;
+            ul_clicou[playerid] = 0;
+        }
+
         CallLocalFunction(player_menu_callback[playerid], "ddd", playerid, response, Menuitem);
 
         ul_clicou[playerid] = 0;
     }
+}*/
+
+new last_click_tick[MAX_PLAYERS];
+new ul_double_click[MAX_PLAYERS];
+
+stock Selecionar(playerid, response)
+{
+    if(strlen(player_menu_callback[playerid]) > 0) 
+    {
+        new 
+            Menuitem = Menu_CurrentItem(playerid),
+            cu_com_dawn = GetTickCount();
+
+        new cooldown = gettime() + 550;
+        if (cooldown < gettime())
+            return false;
+        
+        if((cu_com_dawn - last_click_tick[playerid]) <= 500 && last_selected[playerid] == Menuitem && !ul_double_click[playerid])
+            ul_double_click[playerid] = 1;
+        else ul_double_click[playerid] = 0;
+        
+        last_click_tick[playerid] = cu_com_dawn; 
+
+        ul_clicou[playerid] = (last_selected[playerid] == Menuitem) ? 1 : 0;
+        last_selected[playerid] = Menuitem;
+        ul_select[playerid] = Menuitem;
+
+        CallLocalFunction(player_menu_callback[playerid], "ddd", playerid, response, Menuitem);
+
+        ul_clicou[playerid] = 0;
+        ul_double_click[playerid] = 0;
+    }
+    return true;
+}
+
+stock bool:Menu_IsDoubleClick(playerid, index)
+{
+    return (ul_clicou[playerid] && ul_double_click[playerid] && Menu_CurrentItem(playerid) == index);
 }
 
 // INFO: Aparecer o menu android
